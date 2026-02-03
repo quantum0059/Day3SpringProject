@@ -2,6 +2,7 @@ package com.example.day3springboot.controller;
 
 import com.example.day3springboot.model.StudentModel;
 import com.example.day3springboot.service.StudentService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import com.example.day3springboot.dto.*;
 
@@ -20,17 +21,18 @@ public class StudentController {
     //create api
 
     @PostMapping("/add-student")
-    public StudentResponseDto addStudent(@RequestBody StudentRequestDto dto){
+    public StudentResponseDto addStudent(@Valid @RequestBody StudentRequestDto dto){
         return service.addStudent(dto);
     }
 
     @GetMapping("/get-students")
-    public List<StudentModel> getStudents(){
+    public List<StudentResponseDto> getStudents(){
+
         return service.getStudents();
     }
 
     @PutMapping("/update/{id}")
-    public StudentModel updateStudent(@PathVariable String id, @RequestBody StudentModel student){
+    public StudentResponseDto updateStudent(@PathVariable String id, @Valid @RequestBody StudentRequestDto student){
         return service.updateStudent(id, student);
     }
 

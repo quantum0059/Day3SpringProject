@@ -80,30 +80,33 @@ public class StudentService{
     StudentModel existingStudent = repository.findById(id).orElseThrow(() -> new StudentNotFoundException("No Student found"));
     repository.deleteById(id);
   }
-
-
-  public  StudentResponseDto patchStudent(String id, StudentRequestDto student){
-   StudentModel existingStudent = repository.findById(id)
-            .orElseThrow(() -> new StudentNotFoundException(
-                    "Student not found with id: " + id
-            ));
-
-    if(student.getName() != null){
-        existingStudent.setName(student.getName());
-    }
-    if(student.getAge() != 0){
-        existingStudent.setAge(student.getAge());
-    }
-    if(student.getEmail() != null){
-        existingStudent.setEmail(student.getEmail());
+  
+   private StudentResponseDto mapToResponseDto(StudentModel student) {
+        return new StudentResponseDto(
+                student.getId(),
+                student.getName(),
+                student.getAge(),
+                student.getEmail()
+        );
     }
 
-     StudentModel saved = repository.save(existingStudent);
+  public StudentResponseDto patchStudent(String id, Map<String, Object> updates) {
 
-    return new StudentResponseDto(
-            saved.getId(),
-            saved.getName(),
-            saved.getAge(),
-            saved.getEmail()
-    );
+        StudentModel student = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        if (updates.containsKey("name")) {
+            student.setName((String) updates.get("name"));
+        }
+
+        if (updates.containsKey("email")) {
+            student.setEmail((String) updates.get("email"));
+        }
+
+        if (updates.containsKey("age")) {
+            student.setAge((Integer) updates.get("age"));
+        }
+
+        StudentModel saved = repository.save(student);
+        return mapToResponseDto(saved);
   }}

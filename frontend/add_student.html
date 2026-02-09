@@ -7,241 +7,243 @@
     <style>
         body {
             margin: 0;
-            padding: 0;
             font-family: "Segoe UI", sans-serif;
             background: linear-gradient(135deg, #74ebd5, #acb6e5);
             min-height: 100vh;
         }
 
-        .header {
+        h1 {
             text-align: center;
-            padding: 25px 0;
-            color: #fff;
+            padding: 20px;
+            color: white;
         }
 
-        .header h1 {
-            margin: 0;
-            font-size: 36px;
-        }
-
-        .form-container {
+        .container {
             width: 85%;
-            margin: 0 auto 25px;
+            margin: auto;
             background: white;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
 
-        .form-container h3 {
-            margin-bottom: 15px;
-        }
-
         .form-group {
             display: flex;
             gap: 15px;
-            flex-wrap: wrap;
+            margin-bottom: 20px;
         }
 
-        .form-group input {
+        input {
             flex: 1;
             padding: 10px;
             border-radius: 6px;
             border: 1px solid #ccc;
-            font-size: 14px;
         }
 
-        .form-group button {
-            padding: 10px 20px;
-            background: #4f46e5;
-            color: white;
+        button {
+            padding: 8px 14px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            color: white;
         }
 
-        .form-group button:hover {
-            background: #4338ca;
-        }
-
-        .table-container {
-            width: 85%;
-            margin: auto;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
-        }
+        .save-btn { background: #4f46e5; }
+        .update-btn { background: #22c55e; }
+        .delete-btn { background: #ef4444; }
 
         table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        thead {
-            background-color: #4f46e5;
-            color: #ffffff;
-        }
-
         th, td {
-            padding: 14px 16px;
+            padding: 12px;
             text-align: center;
         }
 
+        thead {
+            background: #4f46e5;
+            color: white;
+        }
+
         tbody tr:hover {
-            background-color: #f1f5ff;
+            background: #f1f5ff;
         }
 
-        .delete-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 5px;
-            cursor: pointer;
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
         }
 
-        .delete-btn:hover {
-            background: #dc2626;
+        .modal-content {
+            background: white;
+            padding: 20px;
+            width: 320px;
+            border-radius: 10px;
         }
 
-        .update-btn {
-            background: #22c55e;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: 6px;
+        .modal-content h3 {
+            margin-top: 0;
         }
 
-        .update-btn:hover {
-            background: #16a34a;
+        .modal-content input {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: space-between;
         }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h1>Student Details</h1>
-</div>
+<h1>Student Details</h1>
 
-<!-- FORM -->
-<div class="form-container">
-    <h3>Add / Update Student</h3>
+<div class="container">
+    <h3>Add Student</h3>
     <div class="form-group">
-        <input type="text" id="name" placeholder="Name">
-        <input type="number" id="age" placeholder="Age">
-        <input type="email" id="email" placeholder="Email">
-        <button onclick="submitStudent()">Save</button>
+        <input id="name" placeholder="Name">
+        <input id="age" type="number" placeholder="Age">
+        <input id="email" placeholder="Email">
+        <button class="save-btn" onclick="addStudent()">Save</button>
     </div>
-</div>
 
-<!-- TABLE -->
-<div class="table-container">
     <table>
         <thead>
-            <tr>
-                <th>Student ID</th>
-                <th>Name</th>
-                <th>Age</th>
-                <th>Email</th>
-                <th>Action</th>
-            </tr>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Age</th>
+            <th>Email</th>
+            <th>Action</th>
+        </tr>
         </thead>
         <tbody id="studentTableBody"></tbody>
     </table>
 </div>
 
+<!-- UPDATE MODAL -->
+<div id="updateModal" class="modal">
+    <div class="modal-content">
+        <h3>Update Student</h3>
+        <input id="u-name" placeholder="Name">
+        <input id="u-age" type="number" placeholder="Age">
+        <input id="u-email" placeholder="Email">
+
+        <div class="modal-actions">
+            <button class="update-btn" onclick="patchStudent()">Update</button>
+            <button class="delete-btn" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const BASE_URL = "http://localhost:8080";
-    let updateStudentId = null;
+    let currentId = null;
 
+    // LOAD STUDENTS
     function loadStudents() {
         fetch(`${BASE_URL}/get-students`)
             .then(res => res.json())
             .then(data => {
-                const tableBody = document.getElementById("studentTableBody");
-                tableBody.innerHTML = "";
+                const tbody = document.getElementById("studentTableBody");
+                tbody.innerHTML = "";
 
-                data.forEach(student => {
-                    const row = document.createElement("tr");
-                    row.innerHTML = `
-                        <td>${student.id}</td>
-                        <td>${student.name}</td>
-                        <td>${student.age}</td>
-                        <td>${student.email}</td>
-                        <td>
-                            <button class="delete-btn"
-                                onclick="deleteStudent('${student.id}')">
-                                Delete
-                            </button>
-                            <button class="update-btn"
-                                onclick="prepareUpdate(
-                                    '${student.id}',
-                                    '${student.name}',
-                                    ${student.age},
-                                    '${student.email}'
-                                )">
-                                Update
-                            </button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
+                data.forEach(s => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${s.id}</td>
+                            <td>${s.name}</td>
+                            <td>${s.age}</td>
+                            <td>${s.email}</td>
+                            <td>
+                                <button class="update-btn"
+                                    onclick="openModal('${s.id}','${s.name}',${s.age},'${s.email}')">
+                                    Update
+                                </button>
+                                <button class="delete-btn"
+                                    onclick="deleteStudent('${s.id}')">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>`;
                 });
             });
     }
 
-    function submitStudent() {
+    // ADD STUDENT
+    function addStudent() {
         const student = {
-            name: document.getElementById("name").value || null,
-            age: document.getElementById("age").value
-                ? parseInt(document.getElementById("age").value)
-                : null,
-            email: document.getElementById("email").value || null
+            name: document.getElementById("name").value,
+            age: parseInt(document.getElementById("age").value),
+            email: document.getElementById("email").value
         };
 
-        // PATCH
-        if (updateStudentId) {
-            fetch(`${BASE_URL}/studentPatch/${updateStudentId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(student)
-            }).then(() => {
-                resetForm();
-                loadStudents();
-            });
-        }
-        // POST
-        else {
-            fetch(`${BASE_URL}/add-student`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(student)
-            }).then(() => {
-                resetForm();
-                loadStudents();
-            });
-        }
+        fetch(`${BASE_URL}/add-student`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(student)
+        }).then(() => {
+            resetForm();
+            loadStudents();
+        });
     }
 
-    function prepareUpdate(id, name, age, email) {
-        updateStudentId = id;
-        document.getElementById("name").value = name;
-        document.getElementById("age").value = age;
-        document.getElementById("email").value = email;
+    // OPEN UPDATE MODAL
+    function openModal(id, name, age, email) {
+        currentId = id;
+        document.getElementById("u-name").value = name;
+        document.getElementById("u-age").value = age;
+        document.getElementById("u-email").value = email;
+        document.getElementById("updateModal").style.display = "flex";
     }
 
+    // CLOSE MODAL
+    function closeModal() {
+        currentId = null;
+        document.getElementById("updateModal").style.display = "none";
+    }
+
+    // PATCH STUDENT (FIXED)
+    function patchStudent() {
+        const updates = {};
+
+        const name = document.getElementById("u-name").value;
+        const age = document.getElementById("u-age").value;
+        const email = document.getElementById("u-email").value;
+
+        if (name) updates.name = name;
+        if (age) updates.age = parseInt(age);
+        if (email) updates.email = email;
+
+        fetch(`${BASE_URL}/studentPatch/${currentId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updates)
+        }).then(() => {
+            closeModal();
+            loadStudents();
+        });
+    }
+
+    // DELETE STUDENT
     function deleteStudent(id) {
-        fetch(`${BASE_URL}/student/${id}`, {
-            method: "DELETE"
-        }).then(() => loadStudents());
+        fetch(`${BASE_URL}/student/${id}`, { method: "DELETE" })
+            .then(loadStudents);
     }
 
     function resetForm() {
-        updateStudentId = null;
-        document.querySelectorAll("input").forEach(i => i.value = "");
+        document.getElementById("name").value = "";
+        document.getElementById("age").value = "";
+        document.getElementById("email").value = "";
     }
 
     loadStudents();

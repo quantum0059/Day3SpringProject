@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import com.example.day3springboot.dto.*;
 
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -42,8 +43,12 @@ public class StudentController {
         return "student deleted successfully";
     }
 
-    @PatchMapping("/studentPatch/{id}")
-    public StudentResponseDto patchStudent(@PathVariable String id, @Valid @RequestBody StudentRequestDto student){
-        return service.patchStudent(id, student);
+   @PatchMapping("/studentPatch/{id}")
+    public StudentResponseDto updateStudentField(
+            @PathVariable String id,
+            @RequestBody Map<String, Object> updates) {
+
+        return service.patchStudent(id, updates);
     }
+
 }

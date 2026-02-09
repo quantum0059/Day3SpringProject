@@ -8,7 +8,7 @@ import com.example.day3springboot.dto.*;
 
 import java.util.List;
 
-
+@CrossOrigin(origins = "*")
 @RestController
 public class StudentController {
 
@@ -40,5 +40,10 @@ public class StudentController {
     public String deleteStudent(@PathVariable String id){
         service.deleteStudent(id);
         return "student deleted successfully";
+    }
+
+    @PatchMapping("/studentPatch/{id}")
+    public StudentResponseDto patchStudent(@PathVariable String id, @Valid @RequestBody StudentRequestDto student){
+        return service.patchStudent(id, student);
     }
 }

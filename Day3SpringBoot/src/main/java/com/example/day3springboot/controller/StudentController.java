@@ -3,9 +3,10 @@ package com.example.day3springboot.controller;
 import com.example.day3springboot.model.StudentModel;
 import com.example.day3springboot.service.StudentService;
 import jakarta.validation.Valid;
+import com.example.day3springboot.utils.JwtUtil;
 import org.springframework.web.bind.annotation.*;
 import com.example.day3springboot.dto.*;
-
+import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
@@ -14,31 +15,44 @@ import java.util.Map;
 public class StudentController {
 
     private final StudentService service;
+    private final JwtUtil jwtUtil;
 
-    public StudentController(StudentService service){
-        this.service = service;
+    public StudentController(StudentService service,JwtUtil jwtUtil){
+        this.service=service;
+        this.jwtUtil=jwtUtil;
+    }
+
+    private void checkToken(String authHeader){
+        if(authHeader==null || !authHeader.startsWith("Bearer ")){
+            throw new RuntimeException("Invalid token");
+        }
+        String token=authHeader.substring(7);
+        jwtUtil.validateTokenAndGetEmail(token);
     }
 
     //create api
 
     @PostMapping("/add-student")
-    public StudentResponseDto addStudent(@Valid @RequestBody StudentRequestDto dto){
+    public StudentResponseDto addStudent(@RequestHeader("Authorization") String authHeader, @Valid @RequestBody StudentRequestDto dto){
+        checkToken(authHeader);
         return service.addStudent(dto);
     }
 
     @GetMapping("/get-students")
-    public List<StudentResponseDto> getStudents(){
-
+    public List<StudentResponseDto> getStudents(@RequestHeader("Authorization") String authHeader){
+        checkToken(authHeader);
         return service.getStudents();
     }
 
     @PutMapping("/update/{id}")
-    public StudentResponseDto updateStudent(@PathVariable String id, @Valid @RequestBody StudentRequestDto student){
+    public StudentResponseDto updateStudent(@RequestHeader("Authorization") String authHeader , @PathVariable String id, @Valid @RequestBody StudentRequestDto student){
+        checkToken(authHeader);
         return service.updateStudent(id, student);
     }
 
     @DeleteMapping("/student/{id}")
-    public String deleteStudent(@PathVariable String id){
+    public String deleteStudent(@RequestHeader("Authorization") String authHeader,@PathVariable String id){
+        checkToken(authHeader);
         service.deleteStudent(id);
         return "student deleted successfully";
     }
